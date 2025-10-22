@@ -1,68 +1,114 @@
 package com.Vitorggc.arvore_decisao.gui;
 
 import com.Vitorggc.arvore_decisao.model.No;
+import com.Vitorggc.arvore_decisao.model.Usuario;
 import com.Vitorggc.arvore_decisao.service.ArvoreDecisao;
+import com.Vitorggc.arvore_decisao.service.PlacarService;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 public class InterfaceArvoreDecisao extends JFrame implements ActionListener {
 
     private ArvoreDecisao arvore;
+    private PlacarService placarService;
+    private String usuarioAtual;
+
+    // Componentes da Interface
     private JTextArea outputArea;
     private JButton simButton;
     private JButton naoButton;
-    private JButton verArvoreButton;
+    private JButton placarButton;
+    private JButton aprenderListaButton;
+    private JButton limparArvoreButton;
+
+    private JTabbedPane tabbedPane;
+    private ArvoreGraficaPanel arvoreGraficaPanel;
     private JScrollPane arvoreScrollPane;
-    private JPanel arvorePanelContainer;
 
     private No noAtual;
     private No noPai;
     private Boolean foiRespostaSim;
 
-    // Cores e estilos
+    // Estilos
     private Color backgroundColor = new Color(240, 240, 240);
-    private Color panelColor = Color.WHITE;
-    private Color textColor = Color.DARK_GRAY;
     private Font mainFont = new Font("Arial", Font.PLAIN, 16);
     private Font buttonFont = new Font("Arial", Font.BOLD, 14);
 
     public InterfaceArvoreDecisao() {
-        super("MeCHUPAJava");
-        this.arvore = new ArvoreDecisao();
-        this.noAtual = arvore.getRaiz();
+        super("Jogo dos Animais");
 
-        // Configurações da Janela
+        this.usuarioAtual = solicitarUsuario();
+        this.arvore = new ArvoreDecisao();
+        this.placarService = new PlacarService();
+
+        configurarJanela();
+        criarBarraNavegacao();
+        criarAbas();
+
+        iniciarJogo();
+        setVisible(true);
+    }
+
+    private void configurarJanela() {
+        setTitle("Jogo dos Animais - Logado como: " + this.usuarioAtual);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700);
+        setSize(1200, 800);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(backgroundColor);
+    }
 
+    private void criarBarraNavegacao() {
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        navPanel.setBackground(new Color(220, 220, 220));
 
+        placarButton = new JButton("Ver Placar");
+        aprenderListaButton = new JButton("Aprender Lista Pré-definida");
+        limparArvoreButton = new JButton("Limpar Árvore");
+
+        placarButton.addActionListener(this);
+        aprenderListaButton.addActionListener(this);
+        limparArvoreButton.addActionListener(this);
+
+        navPanel.add(placarButton);
+        navPanel.add(aprenderListaButton);
+        navPanel.add(limparArvoreButton);
+
+        add(navPanel, BorderLayout.NORTH);
+    }
+
+    private void criarAbas() {
+        tabbedPane = new JTabbedPane();
+
+        // Aba 1: Jogo
+        JPanel gamePanel = criarPainelJogo();
+        tabbedPane.addTab("Jogo", null, gamePanel, "Aba principal do jogo de adivinhação");
+
+        // Aba 2: Visualização da Árvore
+        arvoreGraficaPanel = new ArvoreGraficaPanel(arvore.getRaiz());
+        arvoreScrollPane = new JScrollPane(arvoreGraficaPanel);
+        tabbedPane.addTab("Visualização da Árvore", null, arvoreScrollPane, "Veja a estrutura da árvore de conhecimento");
+
+        add(tabbedPane, BorderLayout.CENTER);
+    }
+
+    private JPanel criarPainelJogo() {
         JPanel gamePanel = new JPanel(new BorderLayout(10, 10));
-        gamePanel.setBackground(panelColor);
         gamePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
 
         outputArea = new JTextArea();
         outputArea.setEditable(false);
         outputArea.setFont(mainFont);
-        outputArea.setBackground(panelColor);
-        outputArea.setForeground(textColor);
+        outputArea.setLineWrap(true);
+        outputArea.setWrapStyleWord(true);
         JScrollPane scrollPane = new JScrollPane(outputArea);
         gamePanel.add(scrollPane, BorderLayout.CENTER);
 
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        buttonPanel.setBackground(panelColor);
-
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         simButton = new JButton("Sim");
         simButton.setFont(buttonFont);
         simButton.addActionListener(this);
@@ -73,43 +119,34 @@ public class InterfaceArvoreDecisao extends JFrame implements ActionListener {
 
         buttonPanel.add(simButton);
         buttonPanel.add(naoButton);
-
         gamePanel.add(buttonPanel, BorderLayout.SOUTH);
-        add(gamePanel, BorderLayout.CENTER);
 
+        return gamePanel;
+    }
 
-        JPanel sidePanel = new JPanel(new BorderLayout(10, 10));
-        sidePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        verArvoreButton = new JButton("Ver Árvore Completa");
-        verArvoreButton.setFont(buttonFont);
-        verArvoreButton.addActionListener(this);
-        sidePanel.add(verArvoreButton, BorderLayout.NORTH);
-
-        arvorePanelContainer = new JPanel(new BorderLayout());
-        arvorePanelContainer.setBackground(Color.WHITE);
-        arvoreScrollPane = new JScrollPane(arvorePanelContainer);
-        sidePanel.add(arvoreScrollPane, BorderLayout.CENTER);
-
-        add(sidePanel, BorderLayout.EAST);
-
-        iniciarJogo();
-        setVisible(true);
+    private String solicitarUsuario() {
+        String nome = JOptionPane.showInputDialog(null, "Bem-vindo! Por favor, digite seu nome de usuário:", "Login", JOptionPane.PLAIN_MESSAGE);
+        if (nome == null || nome.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Nome de usuário inválido. O programa será encerrado.", "Erro", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        }
+        return nome.trim();
     }
 
     private void iniciarJogo() {
-        outputArea.setText("Pense em um animal. Eu tentarei adivinhar!\n");
+        outputArea.setText("Pense em um animal. Eu tentarei adivinhar!\n\n");
         noAtual = arvore.getRaiz();
         noPai = null;
         atualizarPergunta();
+        atualizarVisualizacaoArvore();
+        tabbedPane.setSelectedIndex(0); // Foca na aba do jogo
+    }
+
+    private void atualizarVisualizacaoArvore() {
+        arvoreGraficaPanel.setRaiz(arvore.getRaiz());
     }
 
     private void atualizarPergunta() {
-        if (noAtual == null) {
-            adicionarConhecimento();
-            return;
-        }
-
         if (noAtual.isEhAnimal()) {
             outputArea.append("O animal em que você pensou é " + noAtual.getTexto() + "?\n");
         } else {
@@ -118,32 +155,34 @@ public class InterfaceArvoreDecisao extends JFrame implements ActionListener {
     }
 
     private void adicionarConhecimento() {
-        String novoAnimal = JOptionPane.showInputDialog(this, "Eu não venci. Qual animal você pensou?");
+        No animalErrado = noAtual;
+        String novoAnimal = JOptionPane.showInputDialog(this, "Eu desisto! Qual animal você pensou?");
         if (novoAnimal == null || novoAnimal.trim().isEmpty()) {
+            outputArea.append("\nJogo cancelado. Vamos começar de novo!\n");
             iniciarJogo();
             return;
         }
 
-        String novaPergunta = JOptionPane.showInputDialog(this,
-                "Me dê uma pergunta que diferencie um(a) " + noAtual.getTexto() + " de um(a) " + novoAnimal + ".");
+        String novaPergunta = JOptionPane.showInputDialog(this, "Digite uma pergunta de 'sim' ou 'não' que diferencie um(a) " + animalErrado.getTexto() + " de um(a) " + novoAnimal + ".");
         if (novaPergunta == null || novaPergunta.trim().isEmpty()) {
+            outputArea.append("\nJogo cancelado. Vamos começar de novo!\n");
             iniciarJogo();
             return;
         }
 
-        int respostaNova = JOptionPane.showConfirmDialog(this,
-                "Para um(a) " + novoAnimal + ", a resposta para '" + novaPergunta + "' é 'sim'?",
-                "Confirmação",
-                JOptionPane.YES_NO_OPTION
-        );
+        int resposta = JOptionPane.showConfirmDialog(this, "Para um(a) " + novoAnimal + ", a resposta para '" + novaPergunta + "' é 'SIM'?", "Confirmação", JOptionPane.YES_NO_OPTION);
+        if (resposta == JOptionPane.CLOSED_OPTION) {
+            outputArea.append("\nJogo cancelado. Vamos começar de novo!\n");
+            iniciarJogo();
+            return;
+        }
 
-        finalizarAprendizado(novoAnimal, novaPergunta, respostaNova == JOptionPane.YES_OPTION);
+        finalizarAprendizado(novoAnimal.trim(), novaPergunta.trim(), resposta == JOptionPane.YES_OPTION, animalErrado);
     }
 
-    private void finalizarAprendizado(String novoAnimal, String novaPergunta, boolean respostaSim) {
+    private void finalizarAprendizado(String novoAnimal, String novaPergunta, boolean respostaSim, No noAntigo) {
         No novoNoPergunta = new No(novaPergunta, false);
         No novoNoAnimal = new No(novoAnimal, true);
-        No noAntigo = noAtual;
 
         if (respostaSim) {
             novoNoPergunta.setSim(novoNoAnimal);
@@ -155,130 +194,70 @@ public class InterfaceArvoreDecisao extends JFrame implements ActionListener {
 
         if (noPai == null) {
             arvore.setRaiz(novoNoPergunta);
-        } else if (foiRespostaSim != null && foiRespostaSim) {
+        } else if (foiRespostaSim) {
             noPai.setSim(novoNoPergunta);
         } else {
             noPai.setNao(novoNoPergunta);
         }
 
-        outputArea.append("Obrigado! Aprendi uma coisa nova!\n\n");
+        placarService.adicionarPontos(this.usuarioAtual, 2);
+        JOptionPane.showMessageDialog(this, "Obrigado! Aprendi uma coisa nova e você ganhou 2 pontos!", "Aprendizado", JOptionPane.INFORMATION_MESSAGE);
+
         arvore.salvarArvore();
         iniciarJogo();
     }
 
-    // Gerar desenho arvore
-    private void atualizarVisualizacaoArvore() {
-        arvorePanelContainer.removeAll();
-        arvorePanelContainer.setLayout(new BoxLayout(arvorePanelContainer, BoxLayout.Y_AXIS));
-
-        JPanel raizPanel = buildNodePanel(arvore.getRaiz());
-        arvorePanelContainer.add(raizPanel);
-
-        arvorePanelContainer.revalidate();
-        arvorePanelContainer.repaint();
-    }
-
-    // recursçao para construir os painéis da árvore
-    private JPanel buildNodePanel(No no) {
-        if (no == null) {
-            return null;
-        }
-
-        JPanel nodePanel = new JPanel();
-        nodePanel.setLayout(new BorderLayout());
-        nodePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        // Cria a label para o nó atual
-        JLabel label = new JLabel(no.getTexto());
-        label.setFont(new Font("Arial", Font.BOLD, 12));
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-
-        // Define a cor de fundo com base no tipo do nó
-        if (no.isEhAnimal()) {
-            label.setBackground(new Color(173, 216, 230)); // Azul claro
+    private void mostrarPlacar() {
+        List<Usuario> ranking = placarService.getRanking();
+        StringBuilder placarTexto = new StringBuilder("--- PLACAR DE PONTOS ---\n\n");
+        if (ranking.isEmpty()) {
+            placarTexto.append("Ainda não há pontuações registradas.");
         } else {
-            label.setBackground(new Color(255, 255, 224)); // Amarelo claro
-        }
-        label.setOpaque(true);
-
-        nodePanel.add(label, BorderLayout.NORTH);
-
-        if (!no.isEhAnimal()) {
-            JPanel childrenPanel = new JPanel(new GridLayout(1, 2));
-            childrenPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-
-            // Painel para o filho "Sim"
-            JPanel simPanel = new JPanel(new BorderLayout());
-            simPanel.add(new JLabel("Sim"), BorderLayout.NORTH);
-            simPanel.add(buildNodePanel(no.getSim()), BorderLayout.CENTER);
-
-            // Painel para o filho "Não"
-            JPanel naoPanel = new JPanel(new BorderLayout());
-            naoPanel.add(new JLabel("Não"), BorderLayout.NORTH);
-            naoPanel.add(buildNodePanel(no.getNao()), BorderLayout.CENTER);
-
-            childrenPanel.add(simPanel);
-            childrenPanel.add(naoPanel);
-
-            nodePanel.add(childrenPanel, BorderLayout.CENTER);
-        }
-
-        return nodePanel;
-    }
-
-    private void listarAnimaisConhecidos() {
-        Set<String> animais = new HashSet<>();
-        listarAnimaisRecursivo(arvore.getRaiz(), animais);
-        StringBuilder lista = new StringBuilder("Animais que conheço:\n");
-        for (String animal : animais) {
-            lista.append("- ").append(animal).append("\n");
-        }
-        outputArea.append("\n--- Lista de Animais ---\n" + lista.toString() + "\n");
-    }
-
-    private void listarAnimaisRecursivo(No no, Set<String> animais) {
-        if (no != null) {
-            if (no.isEhAnimal()) {
-                animais.add(no.getTexto());
-            } else {
-                listarAnimaisRecursivo(no.getSim(), animais);
-                listarAnimaisRecursivo(no.getNao(), animais);
+            int pos = 1;
+            for (Usuario u : ranking) {
+                placarTexto.append(String.format("%dº: %s - %d pontos\n", pos++, u.getNome(), u.getPontuacao()));
             }
         }
+        JOptionPane.showMessageDialog(this, placarTexto.toString(), "Ranking", JOptionPane.INFORMATION_MESSAGE);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == simButton) {
-            handleResposta("s");
-        } else if (e.getSource() == naoButton) {
-            handleResposta("n");
-        } else if (e.getSource() == verArvoreButton) {
-            atualizarVisualizacaoArvore();
+        Object source = e.getSource();
+        if (source == simButton) {
+            handleResposta(true);
+        } else if (source == naoButton) {
+            handleResposta(false);
+        } else if (source == placarButton) {
+            mostrarPlacar();
+        } else if (source == aprenderListaButton) {
+            int resp = JOptionPane.showConfirmDialog(this, "Isso substituirá a árvore atual. Deseja continuar?", "Aviso", JOptionPane.YES_NO_OPTION);
+            if (resp == JOptionPane.YES_OPTION) {
+                arvore.carregarArvorePredefinida();
+                iniciarJogo();
+            }
+        } else if (source == limparArvoreButton) {
+            int resp = JOptionPane.showConfirmDialog(this, "Isso apagará todo o conhecimento da árvore. Deseja continuar?", "Aviso", JOptionPane.YES_NO_OPTION);
+            if (resp == JOptionPane.YES_OPTION) {
+                arvore.resetarArvore();
+                iniciarJogo();
+            }
         }
     }
 
-    private void handleResposta(String resposta) {
-        if (noAtual != null) {
-            if (noAtual.isEhAnimal()) {
-                if (resposta.equalsIgnoreCase("s")) {
-                    outputArea.append("Eu venci!\n\n");
-                    iniciarJogo();
-                } else {
-                    adicionarConhecimento();
-                }
+    private void handleResposta(boolean resposta) {
+        if (noAtual.isEhAnimal()) {
+            if (resposta) {
+                JOptionPane.showMessageDialog(this, "Eu venci! Viva!", "Vitória", JOptionPane.INFORMATION_MESSAGE);
+                iniciarJogo();
             } else {
-                noPai = noAtual;
-                if (resposta.equalsIgnoreCase("s")) {
-                    noAtual = noAtual.getSim();
-                    foiRespostaSim = true;
-                } else {
-                    noAtual = noAtual.getNao();
-                    foiRespostaSim = false;
-                }
-                atualizarPergunta();
+                adicionarConhecimento();
             }
+        } else {
+            noPai = noAtual;
+            foiRespostaSim = resposta;
+            noAtual = resposta ? noAtual.getSim() : noAtual.getNao();
+            atualizarPergunta();
         }
     }
 }
