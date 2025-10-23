@@ -31,7 +31,7 @@ public class ArvoreDecisao {
         No no1 = new No("É um mamífero?", false);
         raiz = no1;
 
-        // Ramo Sim (Mamíferos)
+        // Ramo Sim
         No no2 = new No("É um animal doméstico?", false);
         no1.setSim(no2);
         no2.setSim(new No("Cachorro", true));
@@ -41,7 +41,7 @@ public class ArvoreDecisao {
         no3.setNao(new No("Elefante", true));
 
 
-        // Ramo Não (Não Mamíferos)
+        // Ramo Não 
         No no4 = new No("Tem penas?", false);
         no1.setNao(no4);
         No no5 = new No("Sabe voar?", false);
@@ -54,12 +54,11 @@ public class ArvoreDecisao {
         no6.setSim(new No("Peixe", true));
         no6.setNao(new No("Cobra", true));
 
-        // Adicione mais 17 animais e perguntas aqui para completar os 25...
-        // Exemplo:
+
         No no7 = new No("É um felino?", false);
-        no2.setSim(no7); // Substituindo o cachorro por uma nova pergunta
+        no2.setSim(no7);
         no7.setSim(new No("Gato", true));
-        no7.setNao(new No("Cachorro", true)); // Cachorro agora é a resposta "não" para "é um felino?"
+        no7.setNao(new No("Cachorro", true)); 
 
         salvarArvore();
         System.out.println("Árvore pré-definida carregada.");
