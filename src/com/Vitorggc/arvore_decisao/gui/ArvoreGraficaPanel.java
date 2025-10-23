@@ -94,7 +94,7 @@ public class ArvoreGraficaPanel extends JPanel {
             g.setColor(Color.DARK_GRAY);
             g.drawLine(parentPos.x, parentPos.y, currentPos.x, currentPos.y);
 
-            // Lógica CORRIGIDA para a etiqueta
+           
             String label = (parent.getSim() == node) ? "Sim" : "Não";
             g.setColor(Color.BLUE);
             g.setFont(new Font("Arial", Font.BOLD, 12));
@@ -103,7 +103,7 @@ public class ArvoreGraficaPanel extends JPanel {
             g.drawString(label, labelX, labelY);
         }
 
-        // Desenha o nó (círculo/oval)
+        // Desenha o nó 
         if (node.isEhAnimal()) {
             g.setColor(new Color(220, 255, 220)); // Verde claro para animais
         } else {
@@ -113,7 +113,6 @@ public class ArvoreGraficaPanel extends JPanel {
         g.setColor(Color.BLACK);
         g.drawOval(currentPos.x - nodeWidth / 2, currentPos.y - nodeHeight / 2, nodeWidth, nodeHeight);
 
-        // Desenha o texto do nó centralizado
         drawCenteredString(g, node.getTexto(), new Rectangle(currentPos.x - nodeWidth / 2, currentPos.y - nodeHeight / 2, nodeWidth, nodeHeight));
 
         // Desenha as sub-árvores recursivamente
@@ -135,8 +134,7 @@ public class ArvoreGraficaPanel extends JPanel {
             return new Dimension(800, 600);
         }
         calculateSubtreeSize(raiz);
-        Dimension treeSize = subtreeSizes.getOrDefault(raiz, new Dimension(nodeWidth, nodeHeight));
-        // Adiciona um padding para a visualização não ficar cortada
+        Dimension treeSize = subtreeSizes.getOrDefault(raiz, new Dimension(nodeWidth, nodeHeight))
         return new Dimension(treeSize.width + 100, treeSize.height + 100);
     }
 }
